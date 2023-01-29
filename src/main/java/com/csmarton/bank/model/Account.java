@@ -1,8 +1,12 @@
 package com.csmarton.bank.model;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 public class Account {
     private String iban;
     private double balance;
+
+    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public Account(String iban, double balance) {
         this.iban = iban;
@@ -14,23 +18,40 @@ public class Account {
     }
 
     public double getBalance() {
-        return balance;
+        lock.readLock().lock();
+        try {
+            return balance;
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public boolean withdraw(double amount) {
-        if(amount > getBalance()) {
-            System.out.println(String.format("Not enough credit for this transaction! Iban: %s, balance: %.0f, amount: %.0f", iban, balance, amount));
-            return false;
+        lock.writeLock().lock();
+
+        try {
+            if(amount > getBalance()) {
+                System.out.println(String.format("Not enough credit for this transaction! Iban: %s, balance: %.0f, amount: %.0f", iban, balance, amount));
+                return false;
+            }
+
+            balance -= amount;
+
+            return true;
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        balance -= amount;
-
-        return true;
     }
 
     public boolean deposit(double amount) {
-        balance += amount;
+        lock.writeLock().lock();
+        try {
+            balance += amount;
 
-        return true;
+            return true;
+        } finally {
+            lock.writeLock().unlock();
+        }
+
     }
 }

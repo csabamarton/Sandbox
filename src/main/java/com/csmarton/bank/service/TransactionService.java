@@ -5,36 +5,27 @@ import com.csmarton.bank.model.Transaction;
 import com.csmarton.bank.model.TransactionStatus;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class TransactionService {
 
+    ExecutorService executorService;
+
     AccountService accountService;
 
-    public TransactionService(AccountService accountService) {
+    public TransactionService(ExecutorService executorService, AccountService accountService) {
+        this.executorService = executorService;
         this.accountService = accountService;
     }
 
-    public Transaction initTransfer(Transaction transaction) throws Exception {
-        List<Account> accountsForTransaction = accountService.getAccountsForTransaction(transaction);
+    public Future<Transaction> initTransfer(Transaction transaction) throws Exception {
 
-        Account sender = accountsForTransaction.get(0);
-        Account reciever = accountsForTransaction.get(1);
+        Callable transferCallable = new TransferCallable(accountService, transaction);
 
-        boolean withdrawResult = sender.withdraw(transaction.getAmount());
+        Future<Transaction> future = executorService.submit(transferCallable);
 
-        if (!withdrawResult) {
-            transaction.setStatus(TransactionStatus.FAILED_NO_CREDIT);
-            return transaction;
-        }
-
-        boolean depositResult = reciever.deposit(transaction.getAmount());
-
-        if(depositResult) {
-            transaction.setStatus(TransactionStatus.DONE);
-        } else {
-            transaction.setStatus(TransactionStatus.FAILD_NO_REASON);
-        }
-
-        return transaction;
+        return future;
     }
 }
