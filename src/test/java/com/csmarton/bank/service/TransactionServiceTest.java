@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -77,6 +78,23 @@ class TransactionServiceTest {
 
         Transaction transaction1Result = transactionResult.get();
         Transaction transaction2Result = transactionResult2.get();
+
+        // TODO CountDownLatch
+        /*
+        CountDownLatch latch = new CountDownLatch(totalNumberOfTasks);
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(4);
+        while(...) {
+          taskExecutor.execute(new MyTask());
+        }
+
+        try {
+          latch.await();
+        } catch (InterruptedException E) {
+           // handle
+        }
+         */
+
+        int numOfTransaction = 10;
 
         assertNotNull(transaction1Result);
         assertEquals(50, accountHU.getBalance());
